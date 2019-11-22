@@ -55,7 +55,6 @@ async function detectFace(imgarr, threshold){
     //     })
     // })
     // console.log(arrs)
-    /////////////////////////////////////////
 
     let rectangles = []
     out.map(val=>{
