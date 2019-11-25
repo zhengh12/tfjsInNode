@@ -1,5 +1,5 @@
 const tf = require("@tensorflow/tfjs-node");
-const calculateScales = require("./toolMatrix")
+const toolMatrix = require("./toolMatrix")
 const images = require("images");
 const fs = require("fs");
 
@@ -16,7 +16,7 @@ async function detectFace(imgarr, threshold){
     const origin_h = caffe_img.length
     const origin_w = caffe_img[0].length
     const ch = caffe_img[0][0].length
-    let scales = calculateScales(imgarr)//获得
+    let scales = toolMatrix.calculateScales(imgarr)//获得
     console.log(origin_h,origin_w)
     //console.log(scales)
     //console.log(caffe_img[100][100])
@@ -64,9 +64,29 @@ async function detectFace(imgarr, threshold){
             })
         })
         let roi = val[1][0]
-        let out_w = cls_prob.length
-        let out_h = cls_prob[0].length
+        let out_h = cls_prob.length
+        let out_w = cls_prob[0].length
+        let out_side = Math.max(out_h, out_w)
+        //cls_prob = np.swapaxes(cls_prob, 0, 1)
+        //roi = np.swapaxes(roi, 0, 2)
+        cls_prob = Array(cls_prob[0].length).fill(null).map((val,index1) => {
+            return Array(cls_prob.length).fill(null).map((val,index2)=>{
+                return cls_prob[index2][index1]
+            })
+        })//数组按0,1轴转置
+        roi = Array(roi[0][0].length).fill(null).map((val,index0) => {
+            return Array(roi[0].length).fill(null).map((val,index1)=>{
+                return Array(roi.length).fill(null).map((val,index2)=>{
+                    return roi[index2][index1][index0]
+                })
+            })
+        })//数组按0,2轴转置
+        let rectangle = detect_face_12net(cls_prob, roi, out_side, 1 / scales[i], origin_w, origin_h, threshold[0])
+        rectangle.map(val=>{
+            rectangles.push(val)
+        })    
     })
+    rectangles = tools.NMS(rectangles, 0.7, 'iou')
 }
 
 module.exports=detectFace
