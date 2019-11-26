@@ -24,10 +24,12 @@ async function loadLayersModel(){
     let imgTensors = tf.node.decodeImage(img)
     //let imgTensors = imgTensor.reshape([1,224,224,3])
     let imgarr = await imgTensors.array()
+
     let threshold = [0.6,0.6,0.7]
     await detectFace(imgarr,threshold)
-    const model = await tf.loadLayersModel('file://C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/model/minist-2019_11_21 下午2_21_14.json');
-    //model.summary()
+
+    const model = await tf.loadLayersModel('file://C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/model/Pnet/model.json');
+    // model.summary()
     // let arr = await model.predict(imgTensors).array()
     // let max = 0
     // let maxflag = 0
