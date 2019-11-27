@@ -108,11 +108,12 @@ async function detectFace(imgarr, threshold){
         //console.log(cls_prob.length,cls_prob[0].length)
         //console.log(roi.length,roi[0].length,roi[0][0].length)
         let rectangle = toolMatrix.detect_face_12net(cls_prob, roi, out_side, 1 / scales[index], origin_w, origin_h, threshold[0])
-        // rectangle.map(val=>{
-        //     rectangles.push(val)
-        // })    
+        rectangle.map(val=>{
+            rectangles.push(val)
+        })    
     })
-    // rectangles = tools.NMS(rectangles, 0.7, 'iou')
+    rectangles = toolMatrix.NMS(rectangles, 0.7, 'iou')
+    console.log('rectangles',rectangles)
 }
 
 module.exports=detectFace
