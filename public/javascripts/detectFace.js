@@ -45,7 +45,7 @@ async function detectFace(imgarr, threshold){
         // .resize((ws,hs)).save("./public/Tyler.jpeg")
         let img = fs.readFileSync("C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/images/Tyler.jpeg")
         let imgTensor = tf.node.decodeImage(img)
-        let imgTensors = tf.image.resizeBilinear(imgTensor,[hs,ws])
+        let imgTensors = tf.image.resizeNearestNeighbor(imgTensor,[hs,ws])
         let scale_img = imgTensors.arraySync()
         let scale_imgs = scale_img.map(val=>{
             return val.map(val=>{
@@ -135,7 +135,7 @@ async function detectFace(imgarr, threshold){
         // console.log(crop_img.length,crop_img[0].length)
         let input = tf.tensor(crop_img,[crop_img.length,crop_img[0].length,3])
         // console.log(input)
-        let scale_img = tf.image.resizeBilinear(input,[24,24])
+        let scale_img = tf.image.resizeNearestNeighbor(input,[24,24])
         //console.log("scale_img",scale_img)
         scale_img = scale_img.arraySync()
         //console.log("scale_imgs",scale_img[0][0])
