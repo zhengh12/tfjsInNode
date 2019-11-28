@@ -167,7 +167,7 @@ function rect2square(rectangles){
     let l = w.map((val,index)=>{
         return val>h[index] ? val : h[index] //两个之中取最大值
     })
-    console.log("l:",l)
+    // console.log("l:",l)
     //rectangles[:,0] = rectangles[:,0] + w*0.5 - l*0.5
     // rectangles[:,1] = rectangles[:,1] + h*0.5 - l*0.5 
     // rectangles[:,2:4] = rectangles[:,0:2] + np.repeat([l], 2, axis = 0).T 
@@ -213,7 +213,7 @@ function NMS(rectangles,threshold,type){
             } 
         })
     })
-    console.log(I)
+    // console.log(I)
     let pick = []
     // while len(I)>0:
     //     xx1 = np.maximum(x1[I[-1]], x1[I[0:-1]]) //I[-1] have hightest prob score, I[0:-1]->others
@@ -270,14 +270,20 @@ function NMS(rectangles,threshold,type){
         })
         // console.log("inter",inter)
         // console.log("area:",area)
-        //let o = type === 'iom' ?  [1,1] : inter / (area[I[-1]] + area[I[0:-1]] - inter)
-        
-        let o = I.map((val,index)=>{
+        // console.log(type)
+        // console.log(type === 'iom')
+        let o = type === 'iom' ?  
+        I.map((val,index)=>{
+            // console.log("iom")
+            return inter[index] / (area[II]<=area[val] ? area[II] : area[val]) 
+        }) :
+        I.map((val,index)=>{
+            // console.log("iou")
             return inter[index] / (area[II] + area[val] - inter[index])
         })
-        console.log(o)
+        // console.log("o",o)
         pick.push(II)
-        console.log("pick",pick)
+        // console.log("pick",pick)
         //I = I[np.where(o<=threshold)[0]]
         let III=[]
         o.map((val,index)=>{
@@ -290,16 +296,286 @@ function NMS(rectangles,threshold,type){
         I = III.map(val=>{
             return I[val]
         })
-        console.log(I)
+        // console.log(I)
     }
     // result_rectangle = boxes[pick].tolist()
     let result_rectangle = pick.map(val=>{
         return boxes[val]
     })
-    console.log("result_rectangle:",result_rectangle)
+    // console.log("result_rectangle:",result_rectangle)
     return result_rectangle
+}
+
+function filter_face_24net(cls_prob,roi,rectangles,width,height,threshold){
+    //prob = cls_prob[:,1]
+    let prob = cls_prob.map(val=>{
+        return val[1]
+    })
+    // pick = np.where(prob>=threshold)
+    let pick = []
+    prob.map((val,index)=>{
+        if(val>=threshold){
+            pick.push(index)
+        }
+    })
+    console.log(pick)
+    //rectangles = np.array(rectangles)
+    // x1  = rectangles[pick,0]
+    // y1  = rectangles[pick,1]
+    // x2  = rectangles[pick,2]
+    // y2  = rectangles[pick,3]
+    // sc  = np.array([prob[pick]]).T
+    let x1 = [pick.map(val=>{
+        return rectangles[val][0]
+    })]
+    console.log(x1,x1.length)
+    let y1 = [pick.map(val=>{
+        return rectangles[val][1]
+    })]
+    let x2 = [pick.map(val=>{
+        return rectangles[val][2]
+    })]
+    let y2 = [pick.map(val=>{
+        return rectangles[val][3]
+    })]
+    let sc = pick.map(val=>{
+        return [prob[val]]
+    })
+    // console.log(sc,sc.length)
+    // dx1 = roi[pick,0]
+    // dx2 = roi[pick,1]
+    // dx3 = roi[pick,2]
+    // dx4 = roi[pick,3]
+    let dx1 = [pick.map(val=>{
+        return roi[val][0]
+    })]
+    let dx2 = [pick.map(val=>{
+        return roi[val][1]
+    })]
+    let dx3 = [pick.map(val=>{
+        return roi[val][2]
+    })]
+    let dx4 = [pick.map(val=>{
+        return roi[val][3]
+    })]
+    // w   = x2-x1
+    // h   = y2-y1
+    let w = [x1[0].map((val,index)=>{
+        return x2[0][index]-val
+    })]
+    let h = [y1[0].map((val,index)=>{
+        return y2[0][index]-val
+    })]
+    // console.log(w,w.length)
+    // x1  = np.array([(x1+dx1*w)[0]]).T
+    // y1  = np.array([(y1+dx2*h)[0]]).T
+    // x2  = np.array([(x2+dx3*w)[0]]).T
+    // y2  = np.array([(y2+dx4*h)[0]]).T
+    x1 = x1[0].map((val,index)=>{
+        return [val+dx1[0][index]*w[0][index]]
+    })
+    console.log(x1,x1.length)
+    y1 = y1[0].map((val,index)=>{
+        return [val+dx2[0][index]*h[0][index]]
+    })
+    x2 = x2[0].map((val,index)=>{
+        return [val+dx3[0][index]*w[0][index]]
+    })
+    y2 = y2[0].map((val,index)=>{
+        return [val+dx4[0][index]*h[0][index]]
+    })
+    //rectangles = np.concatenate((x1,y1,x2,y2,sc),axis=1)
+    rectangles = x1.map((val,index)=>{
+        return val.concat(y1[index]).concat(x2[index]).concat(y2[index]).concat(sc[index])
+    })
+    console.log(rectangles,rectangles.length)
+    rectangles = rect2square(rectangles)
+    pick = []
+    // for i in range(len(rectangles)):
+    //     x1 = int(max(0     ,rectangles[i][0]))
+    //     y1 = int(max(0     ,rectangles[i][1]))
+    //     x2 = int(min(width ,rectangles[i][2]))
+    //     y2 = int(min(height,rectangles[i][3]))
+    //     sc = rectangles[i][4]
+    //     if x2>x1 and y2>y1:
+    //         pick.append([x1,y1,x2,y2,sc])
+    rectangles.map(val=>{
+        let x1 = Math.floor(Math.max(0,val[0]))
+        let y1 = Math.floor(Math.max(0,val[1]))
+        let x2 = Math.floor(Math.min(width,val[2]))
+        let y2 = Math.floor(Math.min(height,val[3]))
+        let sc = val[4]
+        if(x2>x1 && y2>y1){
+            pick.push([x1,y1,x2,y2,sc])
+        }
+    })
+    console.log(pick)
+    return NMS(pick,0.3,'iou')
+}
+
+function filter_face_48net(cls_prob,roi,pts,rectangles,width,height,threshold){
+    //prob = cls_prob[:,1]
+    let prob = cls_prob.map(val=>{
+        return val[1]
+    })
+    //pick = np.where(prob>=threshold)
+    let pick = []
+    prob.map((val,index)=>{
+        if(val>=threshold){
+            pick.push(index)
+        }
+    })
+    console.log("pipipk:",pick)
+    //rectangles = np.array(rectangles)
+    // x1  = rectangles[pick,0]
+    // y1  = rectangles[pick,1]
+    // x2  = rectangles[pick,2]
+    // y2  = rectangles[pick,3]
+    // sc  = np.array([prob[pick]]).T
+    let x1 = [pick.map(val=>{
+        return rectangles[val][0]
+    })]
+    console.log(x1,x1.length)
+    let y1 = [pick.map(val=>{
+        return rectangles[val][1]
+    })]
+    console.log(y1,y1.length)
+    let x2 = [pick.map(val=>{
+        return rectangles[val][2]
+    })]
+    console.log(x2,x2.length)
+    let y2 = [pick.map(val=>{
+        return rectangles[val][3]
+    })]
+    let sc = pick.map(val=>{
+        return [prob[val]]
+    })
+    console.log(y2,y2.length)
+    // dx1 = roi[pick,0]
+    // dx2 = roi[pick,1]
+    // dx3 = roi[pick,2]
+    // dx4 = roi[pick,3]
+    let dx1 = [pick.map(val=>{
+        return roi[val][0]
+    })]
+    let dx2 = [pick.map(val=>{
+        return roi[val][1]
+    })]
+    let dx3 = [pick.map(val=>{
+        return roi[val][2]
+    })]
+    let dx4 = [pick.map(val=>{
+        return roi[val][3]
+    })]
+    // w   = x2-x1
+    // h   = y2-y1
+    let w = [x1[0].map((val,index)=>{
+        return x2[0][index]-val
+    })]
+    let h = [y1[0].map((val,index)=>{
+        return y2[0][index]-val
+    })]
+    // pts0= np.array([(w*pts[pick,0]+x1)[0]]).T
+    // pts1= np.array([(h*pts[pick,5]+y1)[0]]).T
+    // pts2= np.array([(w*pts[pick,1]+x1)[0]]).T
+    // pts3= np.array([(h*pts[pick,6]+y1)[0]]).T
+    // pts4= np.array([(w*pts[pick,2]+x1)[0]]).T
+    // pts5= np.array([(h*pts[pick,7]+y1)[0]]).T
+    // pts6= np.array([(w*pts[pick,3]+x1)[0]]).T
+    // pts7= np.array([(h*pts[pick,8]+y1)[0]]).T
+    // pts8= np.array([(w*pts[pick,4]+x1)[0]]).T
+    // pts9= np.array([(h*pts[pick,9]+y1)[0]]).T
+    console.log(pts)
+    let pts0 = pick.map((val,index)=>{
+        return [pts[val][0]*w[0][index] + x1[0][index]]
+    })
+    console.log(pts0)
+    let pts1 = pick.map((val,index)=>{
+        return [pts[val][5]*h[0][index] + y1[0][index]]
+    })
+    let pts2 = pick.map((val,index)=>{
+        return [pts[val][1]*w[0][index] + x1[0][index]]
+    })
+    let pts3 = pick.map((val,index)=>{
+        return [pts[val][6]*h[0][index] + y1[0][index]]
+    })
+    let pts4 = pick.map((val,index)=>{
+        return [pts[val][2]*w[0][index] + x1[0][index]]
+    })
+    let pts5 = pick.map((val,index)=>{
+        return [pts[val][7]*h[0][index] + y1[0][index]]
+    })
+    let pts6 = pick.map((val,index)=>{
+        return [pts[val][3]*w[0][index] + x1[0][index]]
+    })
+    let pts7 = pick.map((val,index)=>{
+        return [pts[val][8]*h[0][index] + y1[0][index]]
+    })
+    let pts8 = pick.map((val,index)=>{
+        return [pts[val][4]*w[0][index] + x1[0][index]]
+    })
+    let pts9 = pick.map((val,index)=>{
+        return [pts[val][9]*h[0][index] + y1[0][index]]
+    })
+    // # pts0 = np.array([(w * pts[pick, 0] + x1)[0]]).T
+    // # pts1 = np.array([(h * pts[pick, 1] + y1)[0]]).T
+    // # pts2 = np.array([(w * pts[pick, 2] + x1)[0]]).T
+    // # pts3 = np.array([(h * pts[pick, 3] + y1)[0]]).T
+    // # pts4 = np.array([(w * pts[pick, 4] + x1)[0]]).T
+    // # pts5 = np.array([(h * pts[pick, 5] + y1)[0]]).T
+    // # pts6 = np.array([(w * pts[pick, 6] + x1)[0]]).T
+    // # pts7 = np.array([(h * pts[pick, 7] + y1)[0]]).T
+    // # pts8 = np.array([(w * pts[pick, 8] + x1)[0]]).T
+    // # pts9 = np.array([(h * pts[pick, 9] + y1)[0]]).T
+    // x1  = np.array([(x1+dx1*w)[0]]).T
+    // y1  = np.array([(y1+dx2*h)[0]]).T
+    // x2  = np.array([(x2+dx3*w)[0]]).T
+    // y2  = np.array([(y2+dx4*h)[0]]).T
+    x1 = x1[0].map((val,index)=>{
+        return [val+dx1[0][index]*w[0][index]]
+    })
+    console.log(x1,x1.length)
+    y1 = y1[0].map((val,index)=>{
+        return [val+dx2[0][index]*h[0][index]]
+    })
+    x2 = x2[0].map((val,index)=>{
+        return [val+dx3[0][index]*w[0][index]]
+    })
+    y2 = y2[0].map((val,index)=>{
+        return [val+dx4[0][index]*h[0][index]]
+    })
+    //rectangles=np.concatenate((x1,y1,x2,y2,sc,pts0,pts1,pts2,pts3,pts4,pts5,pts6,pts7,pts8,pts9),axis=1)
+    rectangles = x1.map((val,index)=>{
+        return val.concat(y1[index]).concat(x2[index]).concat(y2[index]).concat(sc[index]).concat(pts0[index]).concat(pts1[index])
+        .concat(pts2[index]).concat(pts3[index]).concat(pts4[index]).concat(pts5[index]).concat(pts6[index]).concat(pts7[index])
+        .concat(pts8[index]).concat(pts9[index])
+    })
+    pick = []
+    // for i in range(len(rectangles)):
+    //     x1 = int(max(0     ,rectangles[i][0]))
+    //     y1 = int(max(0     ,rectangles[i][1]))
+    //     x2 = int(min(width ,rectangles[i][2]))
+    //     y2 = int(min(height,rectangles[i][3]))
+    //     if x2>x1 and y2>y1:
+    //         pick.append([x1,y1,x2,y2,rectangles[i][4],
+    //              rectangles[i][5],rectangles[i][6],rectangles[i][7],rectangles[i][8],rectangles[i][9],rectangles[i][10],rectangles[i][11],rectangles[i][12],rectangles[i][13],rectangles[i][14]])
+    rectangles.map((val,i)=>{
+        let x1 = Math.floor(Math.max(0,val[0]))
+        let y1 = Math.floor(Math.max(0,val[1]))
+        let x2 = Math.floor(Math.min(width,val[2]))
+        let y2 = Math.floor(Math.min(height,val[3]))
+        if(x2>x1 && y2>y1){
+            pick.push([x1,y1,x2,y2,rectangles[i][4],rectangles[i][5],rectangles[i][6],rectangles[i][7],
+                rectangles[i][8],rectangles[i][9],rectangles[i][10],rectangles[i][11],rectangles[i][12],rectangles[i][13],
+                rectangles[i][14]])
+        }
+    })
+    console.log("pppiiiccckkk:",pick)
+    return NMS(pick,0.3,'iom')
 }
 
 exports.calculateScales = calculateScales
 exports.detect_face_12net = detect_face_12net
 exports.NMS = NMS
+exports.filter_face_24net = filter_face_24net
+exports.filter_face_48net = filter_face_48net

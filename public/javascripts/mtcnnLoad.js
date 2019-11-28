@@ -26,7 +26,17 @@ async function loadLayersModel(){
     let imgarr = await imgTensors.array()
 
     let threshold = [0.6,0.6,0.7]
-    await detectFace(imgarr,threshold)
+    let rectangles = await detectFace(imgarr,threshold)
+    console.log(rectangles)
+    let x1 = rectangles[0][0]
+    let y1 = rectangles[0][1]
+    let x2 = rectangles[0][2]
+    let y2 = rectangles[0][3]
+    let imgborder = 5
+    images("./public/images/Tyler.jpeg").draw(images(x2-x1, imgborder).fill(127, 255, 170, 0.7),x1,y1)
+    .draw(images(imgborder, y2-y1).fill(127, 255, 170, 0.7),x1,y1)
+    .draw(images(x2-x1, imgborder).fill(127, 255, 170, 0.7),x1,y2-imgborder)
+    .draw(images(imgborder, y2-y1).fill(127, 255, 170, 0.7),x2-imgborder,y1).save("./public/Tyler.jpeg")
 
     const model = await tf.loadLayersModel('file://C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/model/Pnet/model.json');
     // model.summary()

@@ -6,7 +6,8 @@ const fs = require("fs");
 async function detectFace(imgarr, threshold){
     //导入Pnet预训练模型
     const Pnet = await tf.loadLayersModel('file://C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/model/Pnet/model.json');
-    
+    const Rnet = await tf.loadLayersModel('file://C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/model/Rnet/model.json');
+    const Onet = await tf.loadLayersModel('file://C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/model/Onet/model.json');
     let caffe_img = imgarr.map(val=>{
         return val.map(val=>{
             return val.map(val=>{
@@ -113,7 +114,71 @@ async function detectFace(imgarr, threshold){
         })    
     })
     rectangles = toolMatrix.NMS(rectangles, 0.7, 'iou')
-    console.log('rectangles',rectangles)
+    console.log('rectangles',rectangles,rectangles.length)
+
+    if (rectangles.length === 0){
+        return rectangles
+    }
+
+    let crop_number = 0
+    out = []
+    let predict_24_batch = []
+    //rectangles=[[153.0, 445.0, 170.0, 462.0, 0.6271253228187561],[189.0, 513.0, 206.0, 529.0, 0.6269974112510681]]
+    rectangles.map(val=>{
+        //console.log(caffe_img)
+        let crop_img = caffe_img.map(vals=>{
+            // console.log("val:",vals)
+            // console.log("vals:",vals.slice(val[0],val[2]+1))
+            return vals.slice(val[0],val[2])
+        }).slice(val[1],val[3])
+        // console.log(crop_img)
+        // console.log(crop_img.length,crop_img[0].length)
+        let input = tf.tensor(crop_img,[crop_img.length,crop_img[0].length,3])
+        // console.log(input)
+        let scale_img = tf.image.resizeBilinear(input,[24,24])
+        //console.log("scale_img",scale_img)
+        scale_img = scale_img.arraySync()
+        //console.log("scale_imgs",scale_img[0][0])
+        predict_24_batch.push(scale_img)
+    })
+    predict_24_batch = tf.tensor(predict_24_batch)
+    out = Rnet.predict(predict_24_batch)
+    console.log(out,out.length)
+    let cls_prob = out[0].arraySync()  
+    let roi_prob = out[1].arraySync() 
+    rectangles = toolMatrix.filter_face_24net(cls_prob, roi_prob, rectangles, origin_w, origin_h, threshold[1])
+
+    if (rectangles.length === 0){
+        return rectangles
+    }
+
+    let predict_batch = []
+    rectangles.map(val=>{
+        //console.log(caffe_img)
+        let crop_img = caffe_img.map(vals=>{
+            // console.log("val:",vals)
+            // console.log("vals:",vals.slice(val[0],val[2]+1))
+            return vals.slice(val[0],val[2])
+        }).slice(val[1],val[3])
+        // console.log(crop_img)
+        // console.log(crop_img.length,crop_img[0].length)
+        let input = tf.tensor(crop_img,[crop_img.length,crop_img[0].length,3])
+        // console.log(input)
+        let scale_img = tf.image.resizeBilinear(input,[48,48])
+        //console.log("scale_img",scale_img)
+        scale_img = scale_img.arraySync()
+        //console.log("scale_imgs",scale_img[0][0])
+        predict_batch.push(scale_img)
+    })
+    predict_batch = tf.tensor(predict_batch)
+    let output = Onet.predict(predict_batch)
+    console.log(output,output.length)
+    cls_prob = output[0].arraySync()
+    console.log(cls_prob)
+    roi_prob = output[1].arraySync()
+    let pts_prob = output[2].arraySync()
+    rectangles = toolMatrix.filter_face_48net(cls_prob, roi_prob, pts_prob, rectangles, origin_w, origin_h, threshold[2])
+    return rectangles
 }
 
 module.exports=detectFace
