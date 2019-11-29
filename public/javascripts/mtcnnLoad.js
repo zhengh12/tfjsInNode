@@ -1,9 +1,9 @@
 
 const tf = require("@tensorflow/tfjs-node");
 const fs = require("fs");
-const gm = require("gm")
 const images = require("images");
 const detectFace = require("./detectFace")
+const inceptionResNetV2 = require("./inceptionResNetV2")
 
 function readImgSync(path) {
     fs.readFileSync(path,'Uint8Array')
@@ -15,7 +15,7 @@ async function loadLayersModel(){
     // .save("./public/images/goldfinch, Carduelis carduelis/hjhj.jpeg")
     //let img = readImg("C:/Users/1/Desktop/tensorflowjs/tfjsNode/public/images/TaylorSwift/TaylorSwift1.png")
     //let img2 = fs.readFileSync("./1.png")
-    let img = fs.readFileSync("C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/images/Tyler.jpeg")
+    let img = fs.readFileSync("./public/images/Tyler.jpeg")
     //let img = fs.readFileSync("C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/images/TaylorSwift/TaylorSwift1.png")
     //tfjs/mobilenet_v1_0.25_224/imagenet_class_names.json
     //let img = new Image("C:/Users/1/Desktop/tensorflowjs/tfjsNode/public/images/TaylorSwift/TaylorSwift1.png")
@@ -26,23 +26,27 @@ async function loadLayersModel(){
     let imgarr = await imgTensors.array()
 
     let threshold = [0.6,0.6,0.7]
-    let rectangles = await detectFace(imgarr,threshold)
-    console.log(rectangles)
-    let image = images("./public/images/Tyler.jpeg")
-    rectangles.map(val=>{
-        let x1 = val[0]
-        let y1 = val[1]
-        let x2 = val[2]
-        let y2 = val[3]
-        let imgborder = 5
-        console.log(x1,y1,x2,y2)
-        image.draw(images(x2-x1, imgborder).fill(127, 255, 170, 0.7),x1,y1)
-        .draw(images(imgborder, y2-y1).fill(127, 255, 170, 0.7),x1,y1)
-        .draw(images(x2-x1, imgborder).fill(127, 255, 170, 0.7),x1,y2-imgborder)
-        .draw(images(imgborder, y2-y1).fill(127, 255, 170, 0.7),x2-imgborder,y1)
-    })
-    image.save("./public/Tyler.jpeg")
-    const model = await tf.loadLayersModel('file://C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/model/Pnet/model.json');
+
+    // let rectangles = await detectFace(imgarr,threshold)
+    // console.log(rectangles)
+    // let image = images("./public/images/Tyler.jpeg")
+    // rectangles.map(val=>{
+    //     let x1 = val[0]
+    //     let y1 = val[1]
+    //     let x2 = val[2]
+    //     let y2 = val[3]
+    //     let imgborder = 5
+    //     console.log(x1,y1,x2,y2)
+    //     image.draw(images(x2-x1, imgborder).fill(127, 255, 170, 0.7),x1,y1)
+    //     .draw(images(imgborder, y2-y1).fill(127, 255, 170, 0.7),x1,y1)
+    //     .draw(images(x2-x1, imgborder).fill(127, 255, 170, 0.7),x1,y2-imgborder)
+    //     .draw(images(imgborder, y2-y1).fill(127, 255, 170, 0.7),x2-imgborder,y1)
+    // })
+    // image.save("./public/Tyler.jpeg")
+
+    // const model = await tf.loadLayersModel('file://./public/model/model.json');
+    let model = inceptionResNetV2.create_inception_resnet_v2()
+    model.summary()
     // model.summary()
     // let arr = await model.predict(imgTensors).array()
     // let max = 0

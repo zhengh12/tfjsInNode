@@ -5,9 +5,9 @@ const fs = require("fs");
 
 async function detectFace(imgarr, threshold){
     //导入Pnet预训练模型
-    const Pnet = await tf.loadLayersModel('file://C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/model/Pnet/model.json');
-    const Rnet = await tf.loadLayersModel('file://C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/model/Rnet/model.json');
-    const Onet = await tf.loadLayersModel('file://C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/model/Onet/model.json');
+    const Pnet = await tf.loadLayersModel('file://./public/model/Pnet/model.json');
+    const Rnet = await tf.loadLayersModel('file://./public/model/Rnet/model.json');
+    const Onet = await tf.loadLayersModel('file://./public/model/Onet/model.json');
     let caffe_img = imgarr.map(val=>{
         return val.map(val=>{
             return val.map(val=>{
