@@ -1,3 +1,4 @@
+const tf = require("@tensorflow/tfjs-node");
 // let cls_prob = [[0,1],[2,3],[4,5],[6,7],[8,9],[10,11],[12,13],[14,15],[16,17],[18,19]]
 // //let cls_prob1 = [[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]
 // //let cls_prob1 = new Array(cls_prob[0].length).fill(new Array(cls_prob.length).fill(99));
@@ -28,4 +29,11 @@
 //     })
 // })
 
-console.log([...''.padEnd(100)].map((v,i)=>i))
+//console.log([...''.padEnd(100)].map((v,i)=>i))
+
+const input1 = tf.input({shape: [2, 2]});
+const input2 = tf.input({shape: [2, 2]});
+const input3 = tf.input({shape: [2, 2]});
+const multiplyLayer = tf.layers.multiply();
+const product = multiplyLayer.apply([input1, new tf.SymbolicTensor({})]);
+console.log(product.shape);

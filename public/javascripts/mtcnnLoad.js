@@ -45,9 +45,19 @@ async function loadLayersModel(){
     // image.save("./public/Tyler.jpeg")
 
     // const model = await tf.loadLayersModel('file://./public/model/model.json');
-    let model = inceptionResNetV2.create_inception_resnet_v2()
-    model.summary()
+
+    // let model = inceptionResNetV2.create_inception_resnet_v2()
     // model.summary()
+    class Lambda extends tf.layers.Layer {
+        //static className = 'Lambda';
+        constructor(config) {
+          super(config);
+        }
+    }
+    Lambda.className = 'Lambda'
+    tf.serialization.registerClass(Lambda);
+    const model = await tf.loadLayersModel('file://./public/model/Facenet/model.json');
+    model.summary()
     // let arr = await model.predict(imgTensors).array()
     // let max = 0
     // let maxflag = 0
