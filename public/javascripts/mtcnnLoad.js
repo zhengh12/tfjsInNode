@@ -50,14 +50,71 @@ async function loadLayersModel(){
     // model.summary()
     class Lambda extends tf.layers.Layer {
         //static className = 'Lambda';
-        constructor(config) {
-          super(config);
+        
+        constructor() {
+            super({});
         }
+        
+        // In this case, the output is a scalar.
+        computeOutputShape(input) { return input[0]; }
+
+        // call() is where we do the computation.
+        call(input,kwargs) { return input[1];}
+        
+        // Every layer needs a unique name.
+        getClassName() { return 'Lambda'; }
+           
     }
     Lambda.className = 'Lambda'
+    let models = tf.sequential()
+
+    // const input1 = tf.input({shape: [2, 2]});
+    // const input2 = tf.input({shape: [2, 2]});
+    // console.log(input1);
+    // const sum = new Lambda().apply([input1, input2]);
+    // console.log(JSON.stringify(sum.shape));
+    // const a = tf.layers.add({batchInputShape:input1.shape}).apply([input1,sum])
+    // console.log(a);
     tf.serialization.registerClass(Lambda);
     const model = await tf.loadLayersModel('file://./public/model/Facenet/model.json');
-    model.summary()
+    //model.summary()
+    img = fs.readFileSync("C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/images/TaylorSwift1.png")
+    img1 = fs.readFileSync("C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/images/TaylorSwift2.png")
+    let imgTensor = tf.node.decodeImage(img)
+    let imgTensor1 = tf.node.decodeImage(img1)
+    //imgTensor = tf.image.resizeNearestNeighbor(imgTensor,[160,160])
+    imgTensor = imgTensor.arraySync()
+    imgTensor1 = imgTensor1.arraySync()
+    // imgTensor = imgTensor.map(val=>{
+    //     return val.map(val=>{
+    //         let array = val.map(val=>{
+    //             val = val - 127.5
+    //             val = val / 127.5
+    //             return val
+    //         })
+    //         array.splice(2,1,...array.splice(0, 1 , array[2]));
+    //         return array
+    //     })
+    // })
+    // imgTensor1 = imgTensor1.map(val=>{
+    //     return val.map(val=>{
+    //         let array = val.map(val=>{
+    //             val = val - 127.5
+    //             val = val / 127.5
+    //             return val
+    //         })
+    //         array.splice(2,1,...array.splice(0, 1 , array[2]));
+    //         return array
+    //     })
+    // })
+    // console.log(imgTensor1)
+    let input = tf.tensor(imgTensor,[160,160,3]).reshape([1,160,160,3])
+    let input1 = tf.tensor(imgTensor1,[160,160,3]).reshape([1,160,160,3])
+    let out = model.predict(input)
+    let out1 = model.predict(input1)
+    console.log(out1)
+    let dist = tf.sqrt(tf.sum(tf.square(out,out1)))
+    console.log(dist.arraySync())
     // let arr = await model.predict(imgTensors).array()
     // let max = 0
     // let maxflag = 0
