@@ -3,11 +3,12 @@ const toolMatrix = require("./toolMatrix")
 const images = require("images");
 const fs = require("fs");
 
-async function detectFace(imgarr, threshold){
+async function detectFace(imgarrs, threshold){
     //导入Pnet预训练模型
     const Pnet = await tf.loadLayersModel('file://./public/model/Pnet/model.json');
     const Rnet = await tf.loadLayersModel('file://./public/model/Rnet/model.json');
     const Onet = await tf.loadLayersModel('file://./public/model/Onet/model.json');
+    let imgarr = imgarrs.arraySync()
     let caffe_img = imgarr.map(val=>{
         return val.map(val=>{
             return val.map(val=>{
@@ -43,9 +44,7 @@ async function detectFace(imgarr, threshold){
 
         // images("./public/images/Tyler.jpeg")
         // .resize((ws,hs)).save("./public/Tyler.jpeg")
-        let img = fs.readFileSync("C:/Users/1/Desktop/tensorflowjs/tfjsNode/tfjsInNode/public/images/Tyler.jpeg")
-        let imgTensor = tf.node.decodeImage(img)
-        let imgTensors = tf.image.resizeNearestNeighbor(imgTensor,[hs,ws])
+        let imgTensors = tf.image.resizeNearestNeighbor(imgarrs,[hs,ws])
         let scale_img = imgTensors.arraySync()
         let scale_imgs = scale_img.map(val=>{
             return val.map(val=>{

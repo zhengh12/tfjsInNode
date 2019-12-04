@@ -31,9 +31,11 @@ const tf = require("@tensorflow/tfjs-node");
 
 //console.log([...''.padEnd(100)].map((v,i)=>i))
 
-const input1 = tf.input({shape: [2, 2]});
-const input2 = tf.input({shape: [2, 2]});
-const input3 = tf.input({shape: [2, 2]});
-const multiplyLayer = tf.layers.multiply();
-const product = multiplyLayer.apply([input1, new tf.SymbolicTensor({})]);
-console.log(product.shape);
+// const input1 = tf.input({shape: [2, 2]});
+// const input2 = tf.input({shape: [2, 2]});
+// const input3 = tf.input({shape: [2, 2]});
+// const multiplyLayer = tf.layers.multiply();
+// const product = multiplyLayer.apply([input1, new tf.SymbolicTensor({})]);
+// console.log(product.shape);
+
+console.log(tf.mean(tf.tensor([[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]]), [0,1,2]).arraySync())
