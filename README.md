@@ -10,3 +10,4 @@ using @tfjs-node
 2019.12.2 inceptionResNetV2.js mtcnnload.js 构建了可训练inception_ResNet_V2，初步导入facenet预训练模型，该模型可以将人脸图片转化成128维的特征向量。其中lambda层还为完全导入，所以目前还不能预测
 2019.12.3 mtcnnload.js 为了实现模型的lambda自定义keras层，在js中注册了自定义层，但由于json模型文件中的层函数被转码了，所以在python上进行测试。初步求出两张人脸之间的欧氏距离，由于模型不完整所以结果有些错误。
 2019.12.4 facenet.js 完成了对输入数据的标准化操作，实现函数prewhiten
+2019.12.5 facenet.js 导入了新inception_ResNet_V1模型，对输入数据添加人人脸检测，处理集中人脸区域，但结果还是没达到预期。

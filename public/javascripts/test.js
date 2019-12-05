@@ -39,3 +39,6 @@ const tf = require("@tensorflow/tfjs-node");
 // console.log(product.shape);
 
 console.log(tf.mean(tf.tensor([[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]]), [0,1,2]).arraySync())
+console.log(tf.add(tf.tensor([1,2,3]),tf.mul(tf.tensor([1,2,3]),tf.scalar(0.1))).print())
+console.log(tf.sqrt(tf.sum(tf.squaredDifference(tf.tensor([1,1,1]),tf.tensor([2,2,2])))).arraySync())
+tf.sqrt(tf.sum(tf.squaredDifference(tf.tensor([[1,1,1]]),tf.tensor([[2,2,2]])))).print()

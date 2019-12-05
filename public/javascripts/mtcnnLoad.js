@@ -5,7 +5,7 @@ const images = require("images");
 const detectFace = require("./detectFace")
 const inceptionResNetV2 = require("./inceptionResNetV2")
 
-const filePath = "./public/images/BillGates/BillGates0.png"
+const filePath = "./public/images/Larry_Page_0000.jpg"
 function readImgSync(path) {
     fs.readFileSync(path,'Uint8Array')
 }
