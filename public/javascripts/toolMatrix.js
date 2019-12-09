@@ -47,14 +47,12 @@ function detect_face_12net(cls_prob,roi,out_side,scale,width,height,threshold){
         }) 
     })
 
-    console.log(x.length,y.length)
     let boundingbox = [x,y]
     boundingbox = Array(boundingbox[0].length).fill(null).map((val,index1) => {
         return Array(boundingbox.length).fill(null).map((val,index2)=>{
             return boundingbox[index2][index1]
         })
     })
-    //console.log(boundingbox,boundingbox.length)
     // boundingbox = np.array([x,y]).T
     // bb1 = np.fix((stride * (boundingbox) + 0 ) * scale)
     let bb1 = boundingbox.map(val=>{
@@ -62,7 +60,6 @@ function detect_face_12net(cls_prob,roi,out_side,scale,width,height,threshold){
             return Math.floor((val * stride + 0) * scale/1.0)
         })
     })
-    //console.log(bb1,bb1.length)
     // bb2 = np.fix((stride * (boundingbox) + 11) * scale)
     let bb2 = boundingbox.map(val=>{
         return val.map(val=>{
@@ -129,7 +126,6 @@ function detect_face_12net(cls_prob,roi,out_side,scale,width,height,threshold){
     //console.log("rectangles:",rectangles)
     rectangles = rect2square(rectangles)
     // let rectangless = rect2square([[1,4,2,6,0.3],[1,4,2,7,0.2],[1,5,2,6,0.1]]) //测试数据
-    console.log("rectangles:",rectangles)
     let pick = []
     // for i in range(len(rectangles)){
     //     x1 = int(max(0     ,rectangles[i][0]))
@@ -150,7 +146,6 @@ function detect_face_12net(cls_prob,roi,out_side,scale,width,height,threshold){
             pick.push([x1,y1,x2,y2,sc])
         }
     })
-    console.log(pick)
     return NMS(pick,0.3,'iou')
 }
 
@@ -318,7 +313,6 @@ function filter_face_24net(cls_prob,roi,rectangles,width,height,threshold){
             pick.push(index)
         }
     })
-    console.log(pick)
     //rectangles = np.array(rectangles)
     // x1  = rectangles[pick,0]
     // y1  = rectangles[pick,1]
@@ -328,7 +322,6 @@ function filter_face_24net(cls_prob,roi,rectangles,width,height,threshold){
     let x1 = [pick.map(val=>{
         return rectangles[val][0]
     })]
-    console.log(x1,x1.length)
     let y1 = [pick.map(val=>{
         return rectangles[val][1]
     })]
@@ -374,7 +367,6 @@ function filter_face_24net(cls_prob,roi,rectangles,width,height,threshold){
     x1 = x1[0].map((val,index)=>{
         return [val+dx1[0][index]*w[0][index]]
     })
-    console.log(x1,x1.length)
     y1 = y1[0].map((val,index)=>{
         return [val+dx2[0][index]*h[0][index]]
     })
@@ -388,7 +380,6 @@ function filter_face_24net(cls_prob,roi,rectangles,width,height,threshold){
     rectangles = x1.map((val,index)=>{
         return val.concat(y1[index]).concat(x2[index]).concat(y2[index]).concat(sc[index])
     })
-    console.log(rectangles,rectangles.length)
     rectangles = rect2square(rectangles)
     pick = []
     // for i in range(len(rectangles)):
@@ -409,7 +400,6 @@ function filter_face_24net(cls_prob,roi,rectangles,width,height,threshold){
             pick.push([x1,y1,x2,y2,sc])
         }
     })
-    console.log(pick)
     return NMS(pick,0.3,'iou')
 }
 
@@ -425,7 +415,6 @@ function filter_face_48net(cls_prob,roi,pts,rectangles,width,height,threshold){
             pick.push(index)
         }
     })
-    console.log("pipipk:",pick)
     //rectangles = np.array(rectangles)
     // x1  = rectangles[pick,0]
     // y1  = rectangles[pick,1]
@@ -435,22 +424,18 @@ function filter_face_48net(cls_prob,roi,pts,rectangles,width,height,threshold){
     let x1 = [pick.map(val=>{
         return rectangles[val][0]
     })]
-    console.log(x1,x1.length)
     let y1 = [pick.map(val=>{
         return rectangles[val][1]
     })]
-    console.log(y1,y1.length)
     let x2 = [pick.map(val=>{
         return rectangles[val][2]
     })]
-    console.log(x2,x2.length)
     let y2 = [pick.map(val=>{
         return rectangles[val][3]
     })]
     let sc = pick.map(val=>{
         return [prob[val]]
     })
-    console.log(y2,y2.length)
     // dx1 = roi[pick,0]
     // dx2 = roi[pick,1]
     // dx3 = roi[pick,2]
@@ -485,11 +470,9 @@ function filter_face_48net(cls_prob,roi,pts,rectangles,width,height,threshold){
     // pts7= np.array([(h*pts[pick,8]+y1)[0]]).T
     // pts8= np.array([(w*pts[pick,4]+x1)[0]]).T
     // pts9= np.array([(h*pts[pick,9]+y1)[0]]).T
-    console.log(pts)
     let pts0 = pick.map((val,index)=>{
         return [pts[val][0]*w[0][index] + x1[0][index]]
     })
-    console.log(pts0)
     let pts1 = pick.map((val,index)=>{
         return [pts[val][5]*h[0][index] + y1[0][index]]
     })
@@ -534,7 +517,6 @@ function filter_face_48net(cls_prob,roi,pts,rectangles,width,height,threshold){
     x1 = x1[0].map((val,index)=>{
         return [val+dx1[0][index]*w[0][index]]
     })
-    console.log(x1,x1.length)
     y1 = y1[0].map((val,index)=>{
         return [val+dx2[0][index]*h[0][index]]
     })
@@ -570,7 +552,7 @@ function filter_face_48net(cls_prob,roi,pts,rectangles,width,height,threshold){
                 rectangles[i][14]])
         }
     })
-    console.log("pppiiiccckkk:",pick)
+    // console.log("pppiiiccckkk:",pick)
     return NMS(pick,0.3,'iom')
 }
 

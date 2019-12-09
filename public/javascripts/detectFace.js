@@ -113,7 +113,7 @@ async function detectFace(imgarrs, threshold){
         })    
     })
     rectangles = toolMatrix.NMS(rectangles, 0.7, 'iou')
-    console.log('rectangles',rectangles,rectangles.length)
+    // console.log('rectangles',rectangles,rectangles.length)
 
     if (rectangles.length === 0){
         return rectangles
@@ -142,7 +142,7 @@ async function detectFace(imgarrs, threshold){
     })
     predict_24_batch = tf.tensor(predict_24_batch)
     out = Rnet.predict(predict_24_batch)
-    console.log(out,out.length)
+    // console.log(out,out.length)
     let cls_prob = out[0].arraySync()  
     let roi_prob = out[1].arraySync() 
     rectangles = toolMatrix.filter_face_24net(cls_prob, roi_prob, rectangles, origin_w, origin_h, threshold[1])
@@ -171,9 +171,9 @@ async function detectFace(imgarrs, threshold){
     })
     predict_batch = tf.tensor(predict_batch)
     let output = Onet.predict(predict_batch)
-    console.log(output,output.length)
+    // console.log(output,output.length)
     cls_prob = output[0].arraySync()
-    console.log(cls_prob)
+    // console.log(cls_prob)
     roi_prob = output[1].arraySync()
     let pts_prob = output[2].arraySync()
     rectangles = toolMatrix.filter_face_48net(cls_prob, roi_prob, pts_prob, rectangles, origin_w, origin_h, threshold[2])

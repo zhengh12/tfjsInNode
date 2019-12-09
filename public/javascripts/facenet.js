@@ -198,4 +198,28 @@ function prewhiten(x) {
     y = tf.tensor(y)
     return y
 }
-EigenfaceVector(modelPath,image1Path,image2Path)
+
+async function faceVector(modelPath,imagePath){
+    let model = await loadFacenetModel(modelPath)
+    let img = fs.readFileSync(imagePath)
+    let imgTensor = tf.node.decodeImage(img)
+    let threshold = [0.6,0.6,0.7]
+    let rectangles = await detectFace(imgTensor,threshold)
+    imgTensor = imgTensor.arraySync()
+    let imgTensorFace = []
+    imgTensor.map((val,index)=>{
+        if(index>rectangles[0][1]&&index<=rectangles[0][3]){
+            imgTensorFace.push(val.slice(rectangles[0][0],rectangles[0][2]))
+        }
+    })
+    imgTensorFace = tf.image.resizeNearestNeighbor(tf.tensor(imgTensorFace,[rectangles[0][3]-rectangles[0][1],rectangles[0][2]-rectangles[0][0],3]),[160,160])
+    imgTensorFace = prewhiten(imgTensorFace)
+    let input = imgTensorFace.reshape([1,160,160,3])
+    let out = model.predict(input)
+    out = l2_normalize(out)
+    // out.print()
+    return out
+}
+// let Vector = EigenfaceVector(modelPath,image1Path,image2Path)
+// console.log(Vector)
+exports.faceVector = faceVector
