@@ -1,3 +1,4 @@
+var fs = require('fs');
 const tf = require("@tensorflow/tfjs-node");
 // let cls_prob = [[0,1],[2,3],[4,5],[6,7],[8,9],[10,11],[12,13],[14,15],[16,17],[18,19]]
 // //let cls_prob1 = [[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]
@@ -38,7 +39,46 @@ const tf = require("@tensorflow/tfjs-node");
 // const product = multiplyLayer.apply([input1, new tf.SymbolicTensor({})]);
 // console.log(product.shape);
 
-console.log(tf.mean(tf.tensor([[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]]), [0,1,2]).arraySync())
-console.log(tf.add(tf.tensor([1,2,3]),tf.mul(tf.tensor([1,2,3]),tf.scalar(0.1))).print())
-console.log(tf.sqrt(tf.sum(tf.squaredDifference(tf.tensor([1,1,1]),tf.tensor([2,2,2])))).arraySync())
-tf.sqrt(tf.sum(tf.squaredDifference(tf.tensor([[1,1,1]]),tf.tensor([[2,2,2]])))).print()
+let components = []
+const files = fs.readdirSync('./public/images/')
+files.forEach(function (item, index) {
+    let stat = fs.lstatSync("./public/images/" + item)
+    if (stat.isDirectory() === true) { 
+      components.push(item)
+    }
+})
+let res = components.map(item=>{
+    let file = fs.readdirSync('./public/images/'+item+'/')
+    return file.map(val=>{
+        let stat = fs.lstatSync('./public/images/'+item+'/'+val)
+        if(stat.isDirectory() === false){
+            return val
+        }
+    })
+})
+
+let trainDatapath = './public/images/RandomForestTrainData/'
+let dirArr=[]
+let dir = fs.readdirSync(trainDatapath)
+dir.map(item=>{
+    let stat = fs.lstatSync(trainDatapath + item)
+    if (stat.isDirectory() === true) { 
+        let subDirArr = []
+        let subDir = fs.readdirSync(trainDatapath + item + '/')
+        subDir.map(val=>{
+            let stat = fs.lstatSync(trainDatapath + item + '/' + val)
+            if(stat.isDirectory() === false){
+                subDirArr.push(trainDatapath + item + '/' + val)
+            }
+        })
+        dirArr.push(subDirArr)
+      }
+})
+
+console.log(components);
+console.log(dirArr);
+
+// console.log(tf.mean(tf.tensor([[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]]), [0,1,2]).arraySync())
+// console.log(tf.add(tf.tensor([1,2,3]),tf.mul(tf.tensor([1,2,3]),tf.scalar(0.1))).print())
+// console.log(tf.sqrt(tf.sum(tf.squaredDifference(tf.tensor([1,1,1]),tf.tensor([2,2,2])))).arraySync())
+// tf.sqrt(tf.sum(tf.squaredDifference(tf.tensor([[1,1,1]]),tf.tensor([[2,2,2]])))).print()
