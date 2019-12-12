@@ -5,7 +5,7 @@ const images = require("images");
 const detectFace = require("./detectFace")
 const inceptionResNetV2 = require("./inceptionResNetV2")
 
-const filePath = "./public/images/Larry_Page_0000.jpg"
+const filePath = "./public/images/xyy/zjz1.jpg"
 function readImgSync(path) {
     fs.readFileSync(path,'Uint8Array')
 }
@@ -24,7 +24,6 @@ async function loadLayersModel(){
     //console.log(imgg)
     let imgarr = tf.node.decodeImage(img)
     //let imgTensors = imgTensor.reshape([1,224,224,3])
-
     let threshold = [0.6,0.6,0.7]
 
     let rectangles = await detectFace(imgarr,threshold)

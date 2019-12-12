@@ -183,6 +183,7 @@ async function trainRandomForest() {
             dirArr.push(subDirArr)
         }
     })
+    
     console.log(dirArr)
     const modelPath = "./public/model/Facenet1/model.json"
     let vectors = []
@@ -191,7 +192,7 @@ async function trainRandomForest() {
             let vector = await facenet.faceVector(modelPath,val)
             vector = vector.arraySync()[0]
             vector = vector.map((val,index)=>{
-                return vector.slice(0,index).concat(vector.slice(index+1,vector.length)).push(indexs)
+                return vector.slice(0,index).concat(vector.slice(index+1,vector.length)).push(index)
             })
             vectors.push(vector)
         })

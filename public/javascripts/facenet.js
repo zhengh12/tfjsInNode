@@ -3,8 +3,9 @@ const fs = require("fs");
 const images = require("images");
 const detectFace = require("./detectFace")
 
-const image1Path = "./public/images/LarryPage/Larry_Page_0000.jpg"
-const image2Path = "./public/images/LarryPage/Larry_Page_0001.jpg"
+// "./public/images/test/微信图片2.jpg"
+const image1Path = "./public/images/xyy/Abdel_Nasser_Assidi_0002.jpg"
+const image2Path = "./public/images/xyy/Zach_Pillar_0001.jpg"
 const modelPath = "./public/model/Facenet1/model.json"
 
 //导入facenet网络模型
@@ -100,6 +101,7 @@ async function EigenfaceVector(modelPath,image1Path,image2Path){
 
     //利用deteFace函数中的mtcnn网络获取图像的人脸矩形区域
     let rectangles = await detectFace(imgTensor,threshold)
+    // rectangles=[[169, 152, 380, 395]]
     let rectangles1 = await detectFace(imgTensor1,threshold)
     console.log('rectanglesout:',rectangles)
     console.log('rectangles1out:',rectangles1)

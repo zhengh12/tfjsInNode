@@ -113,7 +113,7 @@ async function detectFace(imgarrs, threshold){
         })    
     })
     rectangles = toolMatrix.NMS(rectangles, 0.7, 'iou')
-    // console.log('rectangles',rectangles,rectangles.length)
+    //console.log('rectangles12',rectangles,rectangles.length)
 
     if (rectangles.length === 0){
         return rectangles
@@ -146,6 +146,8 @@ async function detectFace(imgarrs, threshold){
     let cls_prob = out[0].arraySync()  
     let roi_prob = out[1].arraySync() 
     rectangles = toolMatrix.filter_face_24net(cls_prob, roi_prob, rectangles, origin_w, origin_h, threshold[1])
+
+    //console.log('rectangles24',rectangles,rectangles.length)
 
     if (rectangles.length === 0){
         return rectangles
