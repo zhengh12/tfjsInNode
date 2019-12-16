@@ -4,8 +4,8 @@ const images = require("images");
 const detectFace = require("./detectFace")
 
 // "./public/images/test/微信图片2.jpg"
-const image1Path = "./public/images/xyy/Abdel_Nasser_Assidi_0002.jpg"
-const image2Path = "./public/images/xyy/Zach_Pillar_0001.jpg"
+const image1Path = "./public/images/RandomForestTrainData1/Adolfo_Aguilar_Zinser/Adolfo_Aguilar_Zinser_0002.jpg"
+const image2Path = "./public/images/RandomForestTrainData1/Adolfo_Aguilar_Zinser/Adolfo_Aguilar_Zinser_0001.jpg"
 const modelPath = "./public/model/Facenet1/model.json"
 
 //导入facenet网络模型
@@ -222,6 +222,6 @@ async function faceVector(modelPath,imagePath){
     // out.print()
     return out
 }
-// let Vector = EigenfaceVector(modelPath,image1Path,image2Path)
+//  let Vector = EigenfaceVector(modelPath,image1Path,image2Path)
 // console.log(Vector)
 exports.faceVector = faceVector
