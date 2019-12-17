@@ -5,7 +5,7 @@ const detectFace = require("./detectFace")
 
 // "./public/images/test/微信图片2.jpg"
 const image1Path = "./public/images/RandomForestTrainData1/Adolfo_Aguilar_Zinser/Adolfo_Aguilar_Zinser_0002.jpg"
-const image2Path = "./public/images/RandomForestTrainData1/Adolfo_Aguilar_Zinser/Adolfo_Aguilar_Zinser_0001.jpg"
+const image2Path = "./public/images/RandomForestPredictData/BillGates/BillGates_p_0.jpg"
 const modelPath = "./public/model/Facenet1/model.json"
 
 //导入facenet网络模型
@@ -97,12 +97,12 @@ async function EigenfaceVector(modelPath,image1Path,image2Path){
     let img1 = fs.readFileSync(image2Path)
     let imgTensor = tf.node.decodeImage(img)
     let imgTensor1 = tf.node.decodeImage(img1)
-    let threshold = [0.6,0.6,0.7]
+    let threshold = [0.6,0.7,0.7]
 
     //利用deteFace函数中的mtcnn网络获取图像的人脸矩形区域
-    let rectangles = await detectFace(imgTensor,threshold)
+    let rectangles = await detectFace.detectFace(imgTensor,threshold)
     // rectangles=[[169, 152, 380, 395]]
-    let rectangles1 = await detectFace(imgTensor1,threshold)
+    let rectangles1 = await detectFace.detectFace(imgTensor1,threshold)
     console.log('rectanglesout:',rectangles)
     console.log('rectangles1out:',rectangles1)
 
@@ -201,12 +201,11 @@ function prewhiten(x) {
     return y
 }
 
-async function faceVector(modelPath,imagePath){
-    let model = await loadFacenetModel(modelPath)
+async function faceVector(model,imagePath){
     let img = fs.readFileSync(imagePath)
     let imgTensor = tf.node.decodeImage(img)
     let threshold = [0.6,0.6,0.7]
-    let rectangles = await detectFace(imgTensor,threshold)
+    let rectangles = await detectFace.detectFace(imgTensor,threshold)
     imgTensor = imgTensor.arraySync()
     let imgTensorFace = []
     imgTensor.map((val,index)=>{
@@ -222,6 +221,11 @@ async function faceVector(modelPath,imagePath){
     // out.print()
     return out
 }
-//  let Vector = EigenfaceVector(modelPath,image1Path,image2Path)
+//let Vector = EigenfaceVector(modelPath,image1Path,image2Path)
 // console.log(Vector)
+// let model = await loadFacenetModel(modelPath)
+// let Vector = await faceVector(model,"./public/images/RandomForestPredictData/BillGates/BillGates_p_0.jpg")
+// console.log(Vector)
+
 exports.faceVector = faceVector
+exports.loadFacenetModel = loadFacenetModel

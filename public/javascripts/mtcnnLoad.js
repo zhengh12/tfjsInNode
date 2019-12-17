@@ -5,7 +5,7 @@ const images = require("images");
 const detectFace = require("./detectFace")
 const inceptionResNetV2 = require("./inceptionResNetV2")
 
-const filePath = "./public/images/xyy/zjz1.jpg"
+const filePath = "./public/images/RandomForestPredictData/BillGates/BillGates_p_1.jpg"
 function readImgSync(path) {
     fs.readFileSync(path,'Uint8Array')
 }
@@ -26,7 +26,7 @@ async function loadLayersModel(){
     //let imgTensors = imgTensor.reshape([1,224,224,3])
     let threshold = [0.6,0.6,0.7]
 
-    let rectangles = await detectFace(imgarr,threshold)
+    let rectangles = await detectFace.detectFace(imgarr,threshold)
     console.log('finalrectangles:',rectangles)
     let image = images(filePath)
     rectangles.map(val=>{
