@@ -3,9 +3,11 @@ const facenet = require("./facenet")
 const fs = require("fs");
 const tf = require("@tensorflow/tfjs-node");
 const RandomForest = require('ml-random-forest') 
+const detectFace = require("./detectFace")
+const { agnes } = require('ml-hclust');
 
 //主文件夹下包含多个子文件夹，每个子文件夹作为一个人脸分类，一个子文件夹包含至少一张人脸图片
-async function loadFiles(dataPath, FacenetModel){
+async function loadFiles(dataPath, FacenetModel, Pnet, Rnet, Onet){
     let dirArr=[]
     let dir = fs.readdirSync(dataPath)
     dir.map(item=>{
@@ -27,7 +29,7 @@ async function loadFiles(dataPath, FacenetModel){
         let subvector = []
         for(val of dirArr[i]){
             console.log("loading file: "+val)
-            let vector = await facenet.faceVector(FacenetModel, val)
+            let vector = await facenet.faceVector(FacenetModel, val, Pnet, Rnet, Onet)
             vector = vector.arraySync()[0]
             // vector.push(i)
             // vector = vector.map((val,index)=>{
@@ -42,10 +44,15 @@ async function loadFiles(dataPath, FacenetModel){
 }
 
 async function createTree(){
-    const trainDatapath = './public/images/RandomForestTrainData2/'
+    const trainDatapath = './public/images/RandomForestTrainData1/'
     const modelPath = "./public/model/Facenet1/model.json"
+    const pModelPath = './public/model/Pnet/model.json'
+    const rModelPath = './public/model/Rnet/model.json'
+    const oModelPath = './public/model/Onet/model.json'
     const FacenetModel = await facenet.loadFacenetModel(modelPath)
-    let vectors = await loadFiles(trainDatapath, FacenetModel)
+    const mtcnnModel = await detectFace.loadModel(pModelPath, rModelPath, oModelPath)
+
+    let vectors = await loadFiles(trainDatapath, FacenetModel, mtcnnModel[0], mtcnnModel[1], mtcnnModel[2])
     // console.log(dirArr)
     // let vectors = []
     // dirArr.map((val,indexs)=>{
@@ -60,8 +67,8 @@ async function createTree(){
     // })
     //128维向量平均卷积后的维度为 128-convolutionSize+1
     //再对每一类取类间平均值
-    //for(let j=2; j<=80; j=j+1){
-        let convolutionSize = 40
+    // for(let j=2; j<=100; j=j+1){
+        let convolutionSize = 66
         let convectors = []
         let convectorsAll = []
         for(subVectors of vectors){
@@ -74,6 +81,7 @@ async function createTree(){
                         convector.push(res)
                     }    
                 }
+                
                 // let out = tf.tensor(val)
                 // let out1 = tf.tensor([...convector,...val.slice(val.length-convolutionSize,val.length)])
                 // let dist = tf.sqrt(tf.sum(tf.squaredDifference(out,out1)))
@@ -84,7 +92,12 @@ async function createTree(){
             avgVector = tf.div(avgVector,tf.scalar(subVectors.length))
             convectors.push(avgVector.arraySync())
         }
-
+        // const tree = agnes(convectorsAll, {
+        //     method: 'ward',
+        // });
+        // let str = JSON.stringify(tree,"","\t")
+        // fs.writeFileSync('./public/randomForestJson/data.json',str)
+        // console.log(str)
         // //手动选择距离最远的三个点作为三分类的起始聚类中心
         // let center = []
         // let max = 0
@@ -134,46 +147,46 @@ async function createTree(){
         let ans = kmeans(convectors, 2, { initialization: center, maxIterations:1000})
         console.log("time:",convolutionSize,ans)
     //}//for xunhuan
-
-    // let predictions = []
-    // for(let i=0; i<vectors.length; i++){
-    //     for(let j=0; j<vectors[i].length; j++){
-    //         predictions.push(ans.clusters[i])
-    //     }
+    let predictions = []
+    for(let i=0; i<vectors.length; i++){
+        for(let j=0; j<vectors[i].length; j++){
+            predictions.push(ans.clusters[i])
+        }
+    }
+    const options = {
+        seed: 3,
+        maxFeatures: 0.8,
+        replacement: true,
+        nEstimators: 100,
+        useSampleBagging: true
+    };
+    let classifer = new RandomForest.RandomForestClassifier(options);
+    // console.log(predictions)
+    classifer.train(convectorsAll,predictions)
+    // predict classifer 验证随机森林分类器
+    const predictDatapath = './public/images/RandomForestPredictData/'
+    let predictVectors = await loadFiles(predictDatapath, FacenetModel, mtcnnModel[0], mtcnnModel[1], mtcnnModel[2])
+    // let vector = await facenet.faceVector(FacenetModel,"./public/images/TaylorSwift0004.jpg")
+    // let vector1 = await facenet.faceVector(FacenetModel,"./public/images/TaylorSwift00.jpg")
+    // let vector2 = await facenet.faceVector(FacenetModel,"./public/images/Aaron_Peirsol.jpg")
+    // predictVectors = [vector.arraySync()[0],vector1.arraySync()[0],vector2.arraySync()[0]]
+    predictConVectors = []
+    for(subVectors of predictVectors){
+        for(val of subVectors){
+            let convector = []
+            for(let i=0; i<val.length; i++){
+                let res = i+convolutionSize<=val.length ? val.slice(i, i+convolutionSize).reduce(function (a, b) { return a + b;})/convolutionSize : null
+                if(res !== null){
+                    convector.push(res)
+                }    
+            }
+            predictConVectors.push(convector)
+        }
+    }
+    console.log(predictConVectors.length,predictConVectors[0].length)
+    let result = classifer.predict(predictConVectors);
+    console.log(result)
     // }
-    // const options = {
-    //     seed: 3,
-    //     maxFeatures: 0.8,
-    //     replacement: true,
-    //     nEstimators: 25
-    // };
-    // let classifer = new RandomForest.RandomForestClassifier(options);
-    // // console.log(predictions)
-    // classifer.train(convectorsAll,predictions)
-    // // predict classifer 验证随机森林分类器
-    // const predictDatapath = './public/images/RandomForestPredictData/'
-    // let predictVectors = await loadFiles(predictDatapath, FacenetModel)
-    // // let vector = await facenet.faceVector(FacenetModel,"./public/images/TaylorSwift0004.jpg")
-    // // let vector1 = await facenet.faceVector(FacenetModel,"./public/images/TaylorSwift00.jpg")
-    // // let vector2 = await facenet.faceVector(FacenetModel,"./public/images/Aaron_Peirsol.jpg")
-    // // predictVectors = [vector.arraySync()[0],vector1.arraySync()[0],vector2.arraySync()[0]]
-    // predictConVectors = []
-    // for(subVectors of predictVectors){
-    //     for(val of subVectors){
-    //         let convector = []
-    //         for(let i=0; i<val.length; i++){
-    //             let res = i+convolutionSize<=val.length ? val.slice(i, i+convolutionSize).reduce(function (a, b) { return a + b;})/convolutionSize : null
-    //             if(res !== null){
-    //                 convector.push(res)
-    //             }    
-    //         }
-    //         predictConVectors.push(convector)
-    //     }
-    // }
-    // console.log(predictConVectors.length,predictConVectors[0].length)
-    // let result = classifer.predict(predictConVectors);
-    // console.log(result)
-    //}
 }
 
 createTree()

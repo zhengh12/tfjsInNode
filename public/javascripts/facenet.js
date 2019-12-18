@@ -4,8 +4,8 @@ const images = require("images");
 const detectFace = require("./detectFace")
 
 // "./public/images/test/微信图片2.jpg"
-const image1Path = "./public/images/RandomForestTrainData1/Adolfo_Aguilar_Zinser/Adolfo_Aguilar_Zinser_0002.jpg"
-const image2Path = "./public/images/RandomForestPredictData/BillGates/BillGates_p_0.jpg"
+const image1Path = "./public/images/RandomForestPredictData/Binyamin_Ben-Eliezer/Binyamin_Ben-Eliezer_0005.jpg"
+const image2Path = "./public/images/RandomForestPredictData/Binyamin_Ben-Eliezer/Binyamin_Ben-Eliezer_0006.jpg"
 const modelPath = "./public/model/Facenet1/model.json"
 
 //导入facenet网络模型
@@ -89,7 +89,7 @@ async function loadFacenetModel(modelPath){
 //  image2Path 图像2的文件地址
 //output:
 //  一个长度为2的张量数组
-async function EigenfaceVector(modelPath,image1Path,image2Path){
+async function EigenfaceVector(modelPath, image1Path, image2Path, Pnet, Rnet, Onet){
     
     //导入模型和图像数据
     let model = await loadFacenetModel(modelPath)
@@ -100,9 +100,9 @@ async function EigenfaceVector(modelPath,image1Path,image2Path){
     let threshold = [0.6,0.7,0.7]
 
     //利用deteFace函数中的mtcnn网络获取图像的人脸矩形区域
-    let rectangles = await detectFace.detectFace(imgTensor,threshold)
+    let rectangles = await detectFace.detectFace(imgTensor, threshold, Pnet, Rnet, Onet)
     // rectangles=[[169, 152, 380, 395]]
-    let rectangles1 = await detectFace.detectFace(imgTensor1,threshold)
+    let rectangles1 = await detectFace.detectFace(imgTensor1,threshold, Pnet, Rnet, Onet)
     console.log('rectanglesout:',rectangles)
     console.log('rectangles1out:',rectangles1)
 
@@ -201,11 +201,11 @@ function prewhiten(x) {
     return y
 }
 
-async function faceVector(model,imagePath){
+function faceVector(model, imagePath, Pnet, Rnet, Onet){
     let img = fs.readFileSync(imagePath)
     let imgTensor = tf.node.decodeImage(img)
     let threshold = [0.6,0.6,0.7]
-    let rectangles = await detectFace.detectFace(imgTensor,threshold)
+    let rectangles = detectFace.detectFace(imgTensor, threshold, Pnet, Rnet, Onet)
     imgTensor = imgTensor.arraySync()
     let imgTensorFace = []
     imgTensor.map((val,index)=>{
@@ -221,7 +221,14 @@ async function faceVector(model,imagePath){
     // out.print()
     return out
 }
-//let Vector = EigenfaceVector(modelPath,image1Path,image2Path)
+async function test(){
+    const pModelPath = './public/model/Pnet/model.json'
+    const rModelPath = './public/model/Rnet/model.json'
+    const oModelPath = './public/model/Onet/model.json'
+    const mtcnnModel = await detectFace.loadModel(pModelPath, rModelPath, oModelPath)
+    let Vector = EigenfaceVector(modelPath,image1Path,image2Path, mtcnnModel[0], mtcnnModel[1], mtcnnModel[2])
+}
+test()
 // console.log(Vector)
 // let model = await loadFacenetModel(modelPath)
 // let Vector = await faceVector(model,"./public/images/RandomForestPredictData/BillGates/BillGates_p_0.jpg")

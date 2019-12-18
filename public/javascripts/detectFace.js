@@ -3,11 +3,16 @@ const toolMatrix = require("./toolMatrix")
 const images = require("images");
 const fs = require("fs");
 
-async function detectFace(imgarrs, threshold){
+
+async function loadModel(pModelPath, rModelPath, oModelPath){
+    const Pnet = await tf.loadLayersModel('file://'+pModelPath);
+    const Rnet = await tf.loadLayersModel('file://'+rModelPath);
+    const Onet = await tf.loadLayersModel('file://'+oModelPath);
+    return [Pnet, Rnet, Onet]
+}
+
+function detectFace(imgarrs, threshold, Pnet, Rnet, Onet){
     //导入Pnet预训练模型
-    const Pnet = await tf.loadLayersModel('file://./public/model/Pnet/model.json');
-    const Rnet = await tf.loadLayersModel('file://./public/model/Rnet/model.json');
-    const Onet = await tf.loadLayersModel('file://./public/model/Onet/model.json');
     let imgarr = imgarrs.arraySync()
     let caffe_img = imgarr.map(val=>{
         return val.map(val=>{
@@ -369,3 +374,4 @@ async function detectFace1(imgarrs, threshold){
 
 exports.detectFace = detectFace
 exports.detectFace1 = detectFace1
+exports.loadModel = loadModel
