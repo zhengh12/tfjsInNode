@@ -19,3 +19,4 @@ using @tfjs-node
 2019.12.16 cTreeClassifier.js 在实践中发现，当一维卷积核的长度越大的时候，对卷积后的数据进行聚类的稳定度也就越高，接下来还需要大量的数据测试和调整聚类数。
 2019.12.17 deleteface.js cTreeClassifier.js 尝试修改参数使人脸检测准确率更高，一开始就载入模型，避免重复载入模型耗费大量时间，又增加了数据量进行实验，目前准确率还可以。
 2019.12.18 cTreeClassifier.js 用层次聚类代替了k-means聚类为了达到更好的标记效果。
+2019.12.19 cTreeClassifier.js 尝试了密度聚类和网络聚类，并用特征值卷积

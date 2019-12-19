@@ -228,7 +228,7 @@ async function test(){
     const mtcnnModel = await detectFace.loadModel(pModelPath, rModelPath, oModelPath)
     let Vector = EigenfaceVector(modelPath,image1Path,image2Path, mtcnnModel[0], mtcnnModel[1], mtcnnModel[2])
 }
-test()
+//test()
 // console.log(Vector)
 // let model = await loadFacenetModel(modelPath)
 // let Vector = await faceVector(model,"./public/images/RandomForestPredictData/BillGates/BillGates_p_0.jpg")

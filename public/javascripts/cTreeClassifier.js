@@ -5,6 +5,9 @@ const tf = require("@tensorflow/tfjs-node");
 const RandomForest = require('ml-random-forest') 
 const detectFace = require("./detectFace")
 const { agnes } = require('ml-hclust');
+const clustering = require('density-clustering');
+const snapList = require('snap-to-grid-clustering').snapList
+const {Matrix, EigenvalueDecomposition, covariance} = require('ml-matrix');
 
 //主文件夹下包含多个子文件夹，每个子文件夹作为一个人脸分类，一个子文件夹包含至少一张人脸图片
 async function loadFiles(dataPath, FacenetModel, Pnet, Rnet, Onet){
@@ -53,6 +56,24 @@ async function createTree(){
     const mtcnnModel = await detectFace.loadModel(pModelPath, rModelPath, oModelPath)
 
     let vectors = await loadFiles(trainDatapath, FacenetModel, mtcnnModel[0], mtcnnModel[1], mtcnnModel[2])
+
+    //求得输入数据的协方差矩阵，再求出协方差矩阵的特征值。
+    //这样就可以求得各个特征分量在总体矩阵中的有关性占比。
+    let vectorsAll = []
+    for(subVectors of vectors){
+        for(val of subVectors){
+            vectorsAll.push(val)
+        }
+    } 
+    let tensor = tf.tensor(vectorsAll)
+    tensor = tf.sub(tensor, tf.mean(tensor,0)).arraySync()
+    let vectorMatrix = new Matrix(tensor)
+    let covMatrix = covariance(vectorMatrix) //协方差矩阵
+    //console.log(covMatrix)
+    let EigenvalueMatrix = new EigenvalueDecomposition(covMatrix); //特征类
+    let real = EigenvalueMatrix.realEigenvalues //特征数组
+
+    //console.log(real)
     // console.log(dirArr)
     // let vectors = []
     // dirArr.map((val,indexs)=>{
@@ -65,10 +86,10 @@ async function createTree(){
     //         vectors.push(vector)
     //     })
     // })
-    //128维向量平均卷积后的维度为 128-convolutionSize+1
+    //128维向量特征加权卷积后的维度为 128-convolutionSize+1
     //再对每一类取类间平均值
-    // for(let j=2; j<=100; j=j+1){
-        let convolutionSize = 66
+    //for(let j=2; j<=100; j=j+1){
+        let convolutionSize = 64
         let convectors = []
         let convectorsAll = []
         for(subVectors of vectors){
@@ -76,7 +97,8 @@ async function createTree(){
             for(val of subVectors){
                 let convector = []
                 for(let i=0; i<val.length; i++){
-                    let res = i+convolutionSize<=val.length ? val.slice(i, i+convolutionSize).reduce(function (a, b) { return a + b;})/convolutionSize : null
+                    let EigenvalueSum = real.slice(i, i+convolutionSize).reduce(function (a, b) { return a + b;})
+                    let res = i+convolutionSize<=val.length ? val.slice(i, i+convolutionSize).reduce(function (a, b, index) { return a + b * real[i+index] }, 0)/EigenvalueSum : null
                     if(res !== null){
                         convector.push(res)
                     }    
@@ -92,12 +114,26 @@ async function createTree(){
             avgVector = tf.div(avgVector,tf.scalar(subVectors.length))
             convectors.push(avgVector.arraySync())
         }
+
+        //层次聚类
         // const tree = agnes(convectorsAll, {
         //     method: 'ward',
+        //     isDistanceMatrix: 'false'
         // });
         // let str = JSON.stringify(tree,"","\t")
-        // fs.writeFileSync('./public/randomForestJson/data.json',str)
+        // // fs.writeFileSync('./public/randomForestJson/data.json',str)
         // console.log(str)
+
+        //optics密度聚类
+        // let optics = new clustering.OPTICS();
+        // // parameters: 2 - neighborhood radius, 2 - number of points in neighborhood to form a cluster
+        // let clusters = optics.run(convectorsAll, 0.5, 10);
+        // let plot = optics.getReachabilityPlot();
+        // console.log("j: ",j,clusters);
+
+        //grid网络聚类
+        // console.log(snapList(convectorsAll, 1))
+
         // //手动选择距离最远的三个点作为三分类的起始聚类中心
         // let center = []
         // let max = 0
@@ -128,7 +164,7 @@ async function createTree(){
         //所以在高卷积的前提下用聚类反而能更容易将类内和类间的向量分辨开
         // let sameSum = tf.scalar(0)
         // let differentSum = tf.scalar(0)
-        // let firstClassSum = 4
+        // let firstClassSum = 3
         // for(let k=0; k<convectors.length; k++){
         //     if(k<firstClassSum){
         //         sameSum = tf.add(tf.sqrt(tf.sum(tf.squaredDifference(tf.tensor(convectors[0]),tf.tensor(convectors[k])))),sameSum)
@@ -147,6 +183,8 @@ async function createTree(){
         let ans = kmeans(convectors, 2, { initialization: center, maxIterations:1000})
         console.log("time:",convolutionSize,ans)
     //}//for xunhuan
+
+    //验证分类结果
     let predictions = []
     for(let i=0; i<vectors.length; i++){
         for(let j=0; j<vectors[i].length; j++){
@@ -175,7 +213,8 @@ async function createTree(){
         for(val of subVectors){
             let convector = []
             for(let i=0; i<val.length; i++){
-                let res = i+convolutionSize<=val.length ? val.slice(i, i+convolutionSize).reduce(function (a, b) { return a + b;})/convolutionSize : null
+                let EigenvalueSum = real.slice(i, i+convolutionSize).reduce(function (a, b) { return a + b;})
+                let res = i+convolutionSize<=val.length ? val.slice(i, i+convolutionSize).reduce(function (a, b, index) { return a + b * real[i+index] }, 0)/EigenvalueSum : null
                 if(res !== null){
                     convector.push(res)
                 }    
