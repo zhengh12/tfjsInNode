@@ -20,3 +20,4 @@ using @tfjs-node
 2019.12.17 deleteface.js cTreeClassifier.js 尝试修改参数使人脸检测准确率更高，一开始就载入模型，避免重复载入模型耗费大量时间，又增加了数据量进行实验，目前准确率还可以。
 2019.12.18 cTreeClassifier.js 用层次聚类代替了k-means聚类为了达到更好的标记效果。
 2019.12.19 cTreeClassifier.js 尝试了密度聚类和网络聚类，并用特征值卷积
+2019.12.20 cTreeClassifier.js 尝试了迭代的降维操作，编写函数自动测试准确率。但就目前来看准确率并不高。
