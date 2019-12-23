@@ -175,9 +175,9 @@ async function createTree(){
     let trainVectors = await loadFiles(trainDatapath, FacenetModel, mtcnnModel[0], mtcnnModel[1], mtcnnModel[2])
     let predictVectors = await loadFiles(predictDatapath, FacenetModel, mtcnnModel[0], mtcnnModel[1], mtcnnModel[2])   
     
-    const convolutionSize = 2
+    const convolutionSize = 4
 
-    for(let k=1; k<110; k++){
+    for(let k=1; k<30; k++){
         let vectors = trainVectors
         let pVectors = predictVectors
         let ans = 0
@@ -253,7 +253,8 @@ async function createTree(){
             // console.log("Convolution kernel: ",j," scale: ")
             // tf.div(differentSum,sameSum).print()
             //k-means聚类
-            ans = kmeans(convectorsAvg, 2, { initialization: center, maxIterations:1000})
+            // ans = kmeans(convectorsAvg, 2, { initialization: center, maxIterations:1000})
+            ans = kmeans(convectorsAvg, 3, { initialization: 'kmeans++', maxIterations:1000})
             //console.log("time:",j,ans)
         }//for xunhuan
 
@@ -299,7 +300,7 @@ async function createTree(){
         } 
         let result = classifer.predict(predictConVectors);
         let accuracy = result.reduce((sum, val, index) =>{ let b = val===beforePredictResult[index] ? 1 : 0; return sum + b}, 0) / result.length
-        console.log("classifer accuracy: ", k, ans.centroids, accuracy)
+        console.log("classifer accuracy: ", k, "Class1: ", ans.centroids[0].size, "Class2: ", ans.centroids[1].size, accuracy)
     }
 }
 

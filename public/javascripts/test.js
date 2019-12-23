@@ -126,4 +126,49 @@ for(let j=2; j<=5; j=j+1){
     }
     console.log("con:",convectors)
     console.log("all:",convectorsAll)
+
+
+function getQuad(z) {
+        let A = z[0], B = z[1], C = z[2];
+        let a = 0, b = 1, c = 2;
+        let n = z.length;
+        while (true) {
+            while (true) {
+                while (true) {
+                    while (Area(z[a], z[b], z[c]) <= Area(z[a], z[b], z[c], z[(d + 1) % n])) {
+                        d = (d + 1) % n;
+                    }
+                    if (Area(z[a], z[b], z[c], z[d]) > Area(z[a], z[b], z[(c + 1) % n], z[d])) {
+                        break;
+                    }
+                    c = (c + 1) % n;
+                }
+                if (Area(z[a], z[b], z[c], z[d]) > Area(z[a], z[(b + 1) % n], z[c], z[d])) {
+                    break;
+                }
+                b = (b + 1) % n;
+            }
+            if (Area(z[a], z[b], z[c], z[d]) > Area(A, B, C, D)) {
+                A = z[a];
+                B = z[b];
+                C = z[c];
+                D = z[d];
+            }
+            a = (a + 1) % n;
+            if (a == b) {
+                b = (b + 1) % n;
+            }
+            if (b == c) {
+                c = (c + 1) % n;
+            }
+            if (c == d) {
+                d = (d + 1) % n;
+            }
+            if (a == 0) {
+                break;
+            }
+        }
+
+        return Area(A, B, C, D);
+    }
 }
