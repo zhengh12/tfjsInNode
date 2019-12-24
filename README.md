@@ -22,3 +22,4 @@ using @tfjs-node
 2019.12.19 cTreeClassifier.js 尝试了密度聚类和网络聚类，并用特征值卷积
 2019.12.20 cTreeClassifier.js 尝试了迭代的降维操作，编写函数自动测试准确率。但就目前来看准确率并不高。
 2019.12.23 Keras_TP-GAN 尝试利用GAN进行缺失人脸的补全，目前在python上还没有得到结果。
+2019.12.24 tpgan.py cTreeClassifier.js 加入了PCA主成分分析来对输入数据降维。 

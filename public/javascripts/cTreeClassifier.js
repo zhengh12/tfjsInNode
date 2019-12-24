@@ -118,9 +118,9 @@ function con(vectors, convolutionSize){
     return[convectorsAll, convectorsAvg]
 }
 
-//求得输入数据的协方差矩阵，再求出协方差矩阵的特征值。
-//这样就可以求得各个特征分量在总体矩阵中的有关性占比。
-function findEigenvalue(vectors){
+//PCA主成分分析
+//k为主成分分析中需要保留的前k维特征值 k需要小于等于当前特征维数
+function PCA(vectors, k){
     let vectorsAll = []
     for(subVectors of vectors){
         for(val of subVectors){
@@ -134,7 +134,18 @@ function findEigenvalue(vectors){
     //console.log(covMatrix)
     let EigenvalueMatrix = new EigenvalueDecomposition(covMatrix); //特征类
     let real = EigenvalueMatrix.realEigenvalues //特征数组
-    return real
+    let EigenvectorMatrix = EigenvalueMatrix.eigenvectorMatrix
+    let indexArr = sortToIndex(real)
+    if(k>indexArr.length){
+        console.log("K value is too large! Please select a smaller value")
+        return null
+    }
+    EigenvectorMatrix = indexArr.slice(0, k).map(val=>{
+        return EigenvectorMatrix.getRowVector(val).to1DArray()
+    })
+    EigenvectorMatrix = new Matrix(EigenvectorMatrix)
+    let PCAVectors = vectorMatrix.mmul(EigenvectorMatrix.transpose()).to2DArray()
+    return PCAVectors
 }
 
 //从已经分好类的目录算出测试数据实际上应该被分在哪一类
@@ -161,8 +172,20 @@ function getBeforePredictResult(trainDatapath, predictDatapath, ans){
     return predictResult
 }
 
+function sortToIndex(originalArr){
+    originalArr = originalArr.map(function(item,index){
+        return {'key':index,'value':item}
+    }) 
+    let indexArr = originalArr.sort(function(a,b){
+        return a.value - b.value
+    }).map(function(item){
+        return item.key
+    })
+    return indexArr
+}
+
 async function createTree(){
-    const trainDatapath = './public/images/RandomForestTrainData1/'
+    const trainDatapath = './public/images/RandomForestTrainData/'
     const predictDatapath = './public/images/RandomForestPredictData/'
     const modelPath = "./public/model/Facenet1/model.json"
     const pModelPath = './public/model/Pnet/model.json'
@@ -173,10 +196,39 @@ async function createTree(){
     
     //获取训练数据和测试数据
     let trainVectors = await loadFiles(trainDatapath, FacenetModel, mtcnnModel[0], mtcnnModel[1], mtcnnModel[2])
-    let predictVectors = await loadFiles(predictDatapath, FacenetModel, mtcnnModel[0], mtcnnModel[1], mtcnnModel[2])   
+    //let predictVectors = await loadFiles(predictDatapath, FacenetModel, mtcnnModel[0], mtcnnModel[1], mtcnnModel[2])   
     
     const convolutionSize = 4
+    let lowVectors = trainVectors
+    for(let i=0; i<30; i++){
+        lowVectors = PCA(lowVectors, 128-i*10)
+        console.log(lowVectors.length, lowVectors[0].length)
+        for(val of lowVectors){
+            let dis = tf.sqrt(tf.sum(tf.squaredDifference(tf.tensor(lowVectors[0]),tf.tensor(val)))).arraySync()
+            console.log(dis)
+        }
+    }
+    // let vectorsAll = []
+    // for(subVectors of trainVectors){
+    //     let sum = tf.scalar(0)
+    //     for(val of subVectors){
+    //         sum = tf.add(tf.tensor(val),sum)
+    //     }
+    //     vectorsAll.push(tf.div(sum,tf.scalar(subVectors.length)).arraySync())
+    // } 
+    // console.log(vectorsAll.length, "....", vectorsAll)
+    // let min = 100
+    // let minFlag = []
+    // for(let i=0; i<vectorsAll.length; i++){
+    //     for(let j=i+1; j<vectorsAll.length; j++){
+    //         let dis = tf.sqrt(tf.sum(tf.squaredDifference(tf.tensor(vectorsAll[i].slice(107,vectorsAll[i].length)),tf.tensor(vectorsAll[j].slice(107,vectorsAll[j].length))))).arraySync()
+    //         minFlag = dis < min ? [i, j] : minFlag
+    //         min = dis < min ? dis : min
+    //     }
+    // }
+    // console.log(min, minFlag)
 
+    aaaaa
     for(let k=1; k<30; k++){
         let vectors = trainVectors
         let pVectors = predictVectors
