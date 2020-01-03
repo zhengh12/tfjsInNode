@@ -118,43 +118,13 @@ function con(vectors, convolutionSize){
     return[convectorsAll, convectorsAvg]
 }
 
-//PCA主成分分析
-//k为主成分分析中需要保留的前k维特征值 k需要小于等于当前特征维数
-function PCA(vectors, k){
-    let vectorsAll = []
-    for(subVectors of vectors){
-        for(val of subVectors){
-            vectorsAll.push(val)
-        }
-    } 
-    let tensor = tf.tensor(vectorsAll)
-    tensor = tf.sub(tensor, tf.mean(tensor,0)).arraySync()
-    let vectorMatrix = new Matrix(tensor)
-    let covMatrix = covariance(vectorMatrix) //协方差矩阵
-    //console.log(covMatrix)
-    let EigenvalueMatrix = new EigenvalueDecomposition(covMatrix); //特征类
-    let real = EigenvalueMatrix.realEigenvalues //特征数组
-    let EigenvectorMatrix = EigenvalueMatrix.eigenvectorMatrix
-    let indexArr = sortToIndex(real)
-    if(k>indexArr.length){
-        console.log("K value is too large! Please select a smaller value")
-        return null
-    }
-    EigenvectorMatrix = indexArr.slice(0, k).map(val=>{
-        return EigenvectorMatrix.getRowVector(val).to1DArray()
-    })
-    EigenvectorMatrix = new Matrix(EigenvectorMatrix)
-    let PCAVectors = vectorMatrix.mmul(EigenvectorMatrix.transpose()).to2DArray()
-    return PCAVectors
-}
-
 //从已经分好类的目录算出测试数据实际上应该被分在哪一类
 function getBeforePredictResult(trainDatapath, predictDatapath, ans){
     let dir = findFile(trainDatapath)
     let realClass = []
     for(let i=0; i<dir.length; i++){
         let str = dir[i][0].split("/")
-        realClass.push([str[str.length-2], ans.clusters[i]])
+        realClass.push([str[str.length-2], ans[i]])
     }
     // console.log("realClass",realClass)
     let predictResult = []
@@ -177,15 +147,39 @@ function sortToIndex(originalArr){
         return {'key':index,'value':item}
     }) 
     let indexArr = originalArr.sort(function(a,b){
-        return a.value - b.value
+        return b.value - a.value
     }).map(function(item){
         return item.key
     })
     return indexArr
 }
 
+//PCA主成分分析
+//k为主成分分析中需要保留的前k维特征值 k需要小于等于当前特征维数
+function PCA(vectorsAll, k){
+    let tensor = tf.tensor(vectorsAll)
+    tensor = tf.sub(tensor, tf.mean(tensor,0)).arraySync()
+    let vectorMatrix = new Matrix(tensor)
+    let covMatrix = covariance(vectorMatrix) //协方差矩阵
+    //console.log(covMatrix)
+    let EigenvalueMatrix = new EigenvalueDecomposition(covMatrix); //特征类
+    let real = EigenvalueMatrix.realEigenvalues //特征数组
+    let EigenvectorMatrix = EigenvalueMatrix.eigenvectorMatrix
+    let indexArr = sortToIndex(real)
+    if(k>indexArr.length){
+        console.log("K value is too large! Please select a smaller value")
+        return null
+    }
+    EigenvectorMatrix = indexArr.slice(0, k).map(val=>{
+        return EigenvectorMatrix.getRowVector(val).to1DArray()
+    })
+    EigenvectorMatrix = new Matrix(EigenvectorMatrix)
+    let PCAVectors = vectorMatrix.mmul(EigenvectorMatrix.transpose()).to2DArray()
+    return PCAVectors
+}
+
 async function createTree(){
-    const trainDatapath = './public/images/RandomForestTrainData/'
+    const trainDatapath = './public/images/RandomForestTrainData1/'
     const predictDatapath = './public/images/RandomForestPredictData/'
     const modelPath = "./public/model/Facenet1/model.json"
     const pModelPath = './public/model/Pnet/model.json'
@@ -196,18 +190,100 @@ async function createTree(){
     
     //获取训练数据和测试数据
     let trainVectors = await loadFiles(trainDatapath, FacenetModel, mtcnnModel[0], mtcnnModel[1], mtcnnModel[2])
-    //let predictVectors = await loadFiles(predictDatapath, FacenetModel, mtcnnModel[0], mtcnnModel[1], mtcnnModel[2])   
+    let predictVectors = await loadFiles(predictDatapath, FacenetModel, mtcnnModel[0], mtcnnModel[1], mtcnnModel[2])   
     
+    let vectorsAll = []
+    let vectorsAvg = []
+    for(subVectors of trainVectors){
+        let sum = tf.scalar(0)
+        for(val of subVectors){
+            vectorsAll.push(val)
+            sum = sum.add(tf.tensor(val))
+        }
+        vectorsAvg.push(tf.div(sum,tf.scalar(subVectors.length)).arraySync())
+    } 
     const convolutionSize = 4
-    let lowVectors = trainVectors
-    for(let i=0; i<30; i++){
-        lowVectors = PCA(lowVectors, 128-i*10)
+    let lowVectorsAll = vectorsAll //采用全部向量
+    let lowVectors = vectorsAvg //采用类内平均向量
+    let Class = []
+    let flag = 0
+    for(let k=0; k<120; k++){
+        lowVectors = PCA(lowVectors, 128-k*1)
+        lowVectorsAll = PCA(lowVectorsAll, 128-k*1)
         console.log(lowVectors.length, lowVectors[0].length)
-        for(val of lowVectors){
-            let dis = tf.sqrt(tf.sum(tf.squaredDifference(tf.tensor(lowVectors[0]),tf.tensor(val)))).arraySync()
-            console.log(dis)
+        let scaleAll = 0
+        Class = []
+        for(let i=0; i<lowVectors.length; i++){
+            let scale = 0
+            for(let j=0; j<lowVectors.length; j++){
+                let dis = tf.sqrt(tf.sum(tf.squaredDifference(tf.tensor(lowVectors[i]),tf.tensor(lowVectors[j])))).arraySync()
+                scale = dis<1 ? scale+1 : scale 
+            }
+            scale = scale/lowVectors.length
+            // console.log(scale)
+            if(scale < 0.5){
+                Class.push(0)
+            }else{
+                Class.push(1)
+            }
+            scaleAll = scaleAll + scale
+        }
+        if(scaleAll/lowVectors.length > 0.5){
+            flag = k
+            break
         }
     }
+    console.log("yeye", Class)
+
+    let convectorsAvg = lowVectors
+    let center = []
+    let max = 0
+    for(let m=0; m<convectorsAvg.length; m++){
+        for(let n=0; n<convectorsAvg.length; n++){
+            let dis = tf.sqrt(tf.sum(tf.squaredDifference(tf.tensor(convectorsAvg[m]),tf.tensor(convectorsAvg[n])))).arraySync()
+            center = dis>max ? [convectorsAvg[m],convectorsAvg[n]] : center
+            max = dis>max ? dis : max
+        }
+    }
+
+    ans = kmeans(convectorsAvg, 2, { initialization: center, maxIterations:1000})
+    console.log(ans)
+    
+    let predictions = []
+    for(let i=0; i<trainVectors.length; i++){
+        for(let j=0; j<trainVectors[i].length; j++){
+            predictions.push(ans.clusters[i])
+        }
+    }
+
+    const options = {
+        seed: 3,
+        maxFeatures: 0.8,
+        replacement: true,
+        nEstimators: 100,
+        useSampleBagging: true
+    };
+    let classifer = new RandomForest.RandomForestClassifier(options);
+    classifer.train(lowVectorsAll,predictions)
+
+    let beforePredictResult = getBeforePredictResult(trainDatapath, predictDatapath, ans.clusters)
+    console.log(beforePredictResult)
+    let pVectors = []
+    for(subVectors of predictVectors){
+        for(val of subVectors){
+            pVectors.push(val)
+        }
+    } 
+    //利用分类器进行分类
+    for(let k=0; k<flag+1; k++){
+        pVectors = PCA(pVectors, 128-k*1) 
+    }
+    let predictConVectors = pVectors
+    let result = classifer.predict(predictConVectors);
+    let accuracy = result.reduce((sum, val, index) =>{ let b = val===beforePredictResult[index] ? 1 : 0; return sum + b}, 0) / result.length
+    console.log("classifer accuracy: ", "Class1: ", ans.centroids[0].size, "Class2: ", ans.centroids[1].size, accuracy)
+
+    vvvvv
     // let vectorsAll = []
     // for(subVectors of trainVectors){
     //     let sum = tf.scalar(0)
@@ -228,7 +304,6 @@ async function createTree(){
     // }
     // console.log(min, minFlag)
 
-    aaaaa
     for(let k=1; k<30; k++){
         let vectors = trainVectors
         let pVectors = predictVectors
@@ -337,7 +412,7 @@ async function createTree(){
 
         // predict classifer 验证随机森林分类器
         //获得实际分类
-        let beforePredictResult = getBeforePredictResult(trainDatapath, predictDatapath, ans)
+        let beforePredictResult = getBeforePredictResult(trainDatapath, predictDatapath, ans.clusters)
 
         //利用分类器进行分类
         for(let j=0; j<=k; j++){

@@ -5,9 +5,14 @@ const images = require("images");
 const detectFace = require("./detectFace")
 const inceptionResNetV2 = require("./inceptionResNetV2")
 
+const dataGagenerator = require("./dataGagenerator")
 const filePath = "./public/images/RandomForestPredictData/BillGates/BillGates_p_1.jpg"
 function readImgSync(path) {
     fs.readFileSync(path,'Uint8Array')
+}
+
+function hah(){
+    
 }
 
 async function loadLayersModel(){
@@ -46,6 +51,7 @@ async function loadLayersModel(){
     // const model = await tf.loadLayersModel('file://./public/model/model.json');
 
     let model = inceptionResNetV2.create_inception_resnet_v2()
+    model.fitDataset(dataGagenerator.ds)
     // model.summary()
     
     // let arr = await model.predict(imgTensors).array()

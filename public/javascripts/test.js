@@ -129,6 +129,7 @@ const {Matrix, EigenvalueDecomposition, covariance} = require('ml-matrix');
 //     console.log("all:",convectorsAll)
 
 let vec = [[[2.5,2.4],[0.5,0.7],[2.2,2.9],[1.9,2.2],[3.1,3.0]],[[2.3,2.7],[2,1.6],[1,1.1],[1.5,1.6],[1.1,0.9]]]
+let mm = [[[-1,-2], [-1,0]], [[5,0], [2,1], [0,1]]]
 function findEigenvalue(vectors){
     let vectorsAll = []
     for(subVectors of vectors){
@@ -138,6 +139,7 @@ function findEigenvalue(vectors){
     } 
     let tensor = tf.tensor(vectorsAll)
     tensor = tf.sub(tensor, tf.mean(tensor,0)).arraySync()
+    console.log(tensor)
     let vectorMatrix = new Matrix(tensor)
     let covMatrix = covariance(vectorMatrix) //协方差矩阵
     //console.log(covMatrix)
@@ -163,7 +165,7 @@ function sortToIndex(originalArr){
     return indexArr
 }
 
-let [real, EigenvectorMatrix] = findEigenvalue(vec)
+let [real, EigenvectorMatrix] = findEigenvalue(mm)
 console.log(EigenvectorMatrix)
 
 

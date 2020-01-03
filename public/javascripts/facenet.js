@@ -4,8 +4,8 @@ const images = require("images");
 const detectFace = require("./detectFace")
 
 // "./public/images/test/微信图片2.jpg"
-const image1Path = "./public/images/RandomForestPredictData/Binyamin_Ben-Eliezer/Binyamin_Ben-Eliezer_0005.jpg"
-const image2Path = "./public/images/RandomForestPredictData/Binyamin_Ben-Eliezer/Binyamin_Ben-Eliezer_0006.jpg"
+const image1Path = "./public/images/RandomForestTrainData/Aaron_Peirsol/Aaron_Peirsol_0001.jpg"
+const image2Path = "./public/images/RandomForestTrainData/Ben_Affleck/Ben_Affleck_0001.jpg"
 const modelPath = "./public/model/Facenet1/model.json"
 
 //导入facenet网络模型
@@ -78,7 +78,7 @@ async function loadFacenetModel(modelPath){
     tf.serialization.registerClass(Lambda1);
 
     const model = await tf.loadLayersModel('file://'+modelPath);
-    // model.summary()
+    model.summary()
     return model
 }
 
@@ -228,7 +228,7 @@ async function test(){
     const mtcnnModel = await detectFace.loadModel(pModelPath, rModelPath, oModelPath)
     let Vector = EigenfaceVector(modelPath,image1Path,image2Path, mtcnnModel[0], mtcnnModel[1], mtcnnModel[2])
 }
-//test()
+test()
 // console.log(Vector)
 // let model = await loadFacenetModel(modelPath)
 // let Vector = await faceVector(model,"./public/images/RandomForestPredictData/BillGates/BillGates_p_0.jpg")
